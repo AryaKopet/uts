@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // Import provider package
 
 void main() {
   runApp(MyApp());
@@ -9,54 +10,65 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Simple Widget',
-      home: SimpleWidget(),
+      home: ChangeNotifierProvider( // Gunakan ChangeNotifierProvider
+        create: (context) => MessageProvider(), // Buat instance dari MessageProvider
+        child: SimpleWidget(),
+      ),
     );
   }
 }
 
-class SimpleWidget extends StatefulWidget {
-  @override
-  _SimpleWidgetState createState() => _SimpleWidgetState();
-}
-
-class _SimpleWidgetState extends State<SimpleWidget> {
+// Buat class yang akan bertindak sebagai penyedia (provider)
+class MessageProvider extends ChangeNotifier {
   String _message = "Selamat datang di politeknik sampit";
 
-  void _changeMessage() {
-    setState(() {
-      _message = "Terima kasih atas kunjungannya!";
-    });
-  }
+  // Getter untuk mendapatkan pesan
+  String get message => _message;
 
+  // Method untuk mengubah pesan
+  void changeMessage() {
+    _message = "Terima kasih atas kunjungannya!";
+    // Memberitahu semua listener bahwa data telah berubah
+    notifyListeners();
+  }
+}
+
+class SimpleWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // Gunakan Consumer untuk mendengarkan perubahan pada MessageProvider
     return Scaffold(
       appBar: AppBar(
-                title: Align(
-                  alignment: Alignment.center,
-                  child: Container(
-                    margin: EdgeInsets.only(top: 15.0),
-                    child: Text(
-                      'UTS PENGEMBANGAN APLIKASI MOBILE',
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
+        title: Align(
+          alignment: Alignment.center,
+          child: Container(
+            margin: EdgeInsets.only(top: 15.0),
+            child: Text(
+              'UTS PENGEMBANGAN APLIKASI MOBILE',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-                  "images/logo.png",
-                  height: 200,
-                  width: 200,
-                ),
+              "images/logo.png",
+              height: 200,
+              width: 200,
+            ),
             SizedBox(height: 200,),
-            Text(
-              _message,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20.0),
+            // Gunakan Consumer untuk mendengarkan perubahan pada MessageProvider
+            Consumer<MessageProvider>(
+              builder: (context, provider, child) {
+                return Text(
+                  provider.message, // Ambil pesan dari provider
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 20.0),
+                );
+              },
             ),
             Container(
               margin: EdgeInsets.symmetric(vertical: 20.0),
@@ -74,7 +86,11 @@ class _SimpleWidgetState extends State<SimpleWidget> {
                 ],
               ),
               child: ElevatedButton(
-                onPressed: _changeMessage,
+                onPressed: () {
+                  // Ambil instance dari MessageProvider
+                  MessageProvider provider = Provider.of<MessageProvider>(context, listen: false);
+                  provider.changeMessage(); // Ubah pesan menggunakan provider
+                },
                 child: Text('SUBMIT'),
               ),
             )
