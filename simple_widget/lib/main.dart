@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Import provider package
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(MyApp());
@@ -10,25 +10,31 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Simple Widget',
-      home: ChangeNotifierProvider( // Gunakan ChangeNotifierProvider
-        create: (context) => MessageProvider(), // Buat instance dari MessageProvider
+      home: ChangeNotifierProvider(
+        create: (context) => MessageProvider(),
         child: SimpleWidget(),
       ),
     );
   }
 }
 
-// Buat class yang akan bertindak sebagai penyedia (provider)
 class MessageProvider extends ChangeNotifier {
   String _message = "Selamat datang di politeknik sampit";
+  bool _isLoading = false;
 
-  // Getter untuk mendapatkan pesan
   String get message => _message;
+  bool get isLoading => _isLoading;
 
-  // Method untuk mengubah pesan
-  void changeMessage() {
+  Future<void> changeMessage() async {
+    // Simulasi loading selama 3 detik
+    await Future.delayed(Duration(seconds: 2));
+
     _message = "Terima kasih atas kunjungannya!";
-    // Memberitahu semua listener bahwa data telah berubah
+    notifyListeners();
+  }
+
+  void setLoading(bool value) {
+    _isLoading = value;
     notifyListeners();
   }
 }
@@ -36,7 +42,6 @@ class MessageProvider extends ChangeNotifier {
 class SimpleWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Gunakan Consumer untuk mendengarkan perubahan pada MessageProvider
     return Scaffold(
       appBar: AppBar(
         title: Align(
@@ -60,11 +65,10 @@ class SimpleWidget extends StatelessWidget {
               width: 200,
             ),
             SizedBox(height: 200,),
-            // Gunakan Consumer untuk mendengarkan perubahan pada MessageProvider
             Consumer<MessageProvider>(
               builder: (context, provider, child) {
                 return Text(
-                  provider.message, // Ambil pesan dari provider
+                  provider.message,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 20.0),
                 );
@@ -72,26 +76,29 @@ class SimpleWidget extends StatelessWidget {
             ),
             Container(
               margin: EdgeInsets.symmetric(vertical: 20.0),
-              decoration: BoxDecoration(
-                color: Colors.white, // Warna latar belakang
-                borderRadius: BorderRadius.circular(10.0), // Bentuk persegi panjang
-                border: Border.all(color: Colors.grey), // Border berwarna abu
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.5), // Warna shadow
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: Offset(0, 3), // Posisi shadow
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: () {
-                  // Ambil instance dari MessageProvider
-                  MessageProvider provider = Provider.of<MessageProvider>(context, listen: false);
-                  provider.changeMessage(); // Ubah pesan menggunakan provider
+              child: Consumer<MessageProvider>(
+                builder: (context, provider, child) {
+                  return 
+                      ElevatedButton.icon(
+                        icon: provider.isLoading? 
+                        Container(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+
+                          ),
+                        ):Icon(Icons.feedback),
+                        onPressed: () async {
+                          // Set loading true
+                          provider.setLoading(true);
+                          // Tunggu perubahan pesan
+                          await Provider.of<MessageProvider>(context, listen: false).changeMessage();
+                          // Set loading false
+                          provider.setLoading(false);
+                        },
+                        label: Text('SUBMIT'),
+                      );
                 },
-                child: Text('SUBMIT'),
               ),
             )
           ],
